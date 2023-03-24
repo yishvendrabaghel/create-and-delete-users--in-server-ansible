@@ -5,7 +5,7 @@
       prompt: "Enter a list of users (comma-separated):"
       private: no
   vars:
-    user_to_grant: "bharat.yadav"
+    user_to_grant: "<write the name of the user you want to give admin permissions <user.name>>"
           
   tasks:
     - name: Create users and add public key
@@ -21,7 +21,7 @@
     - name: Add public key to authorized_keys
       authorized_key:
         user: "{{ item.item }}"
-        key: "{{ lookup('file', '/home/ubuntu/aws-ansible/pubfile/' + item.item + '.pub') }}"
+        key: "{{ lookup('file', 'path/where/pubkeys/are/stored/' + item.item + '.pub') }}"
       loop: "{{ users.results }}"
      
 
@@ -44,8 +44,8 @@
 
     - name: Copy SwitchUser Ansible file to server2
       copy:
-        src: /home/ubuntu/test/userSwitch.yaml
-        dest: /var
+        src: /home/ubuntu/ansible/userSwitch.yaml
+        dest: /home/local-user/file
  
     - name: Comment Key to break connection
       lineinfile:
