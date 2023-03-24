@@ -1,0 +1,36 @@
+---
+- name: Remove users and their home directories
+  hosts: all
+  become: true
+
+  vars_prompt:
+    - name: "usernames"
+      prompt: "Enter usernames to delete (comma-separated):"
+      private: no
+
+  tasks:
+    - name: Remove users and their home directories
+      user:
+        name: "{{ item }}"
+        state: absent
+      with_items: "{{ usernames.split(',') }}"
+
+    - name: Remove home directories
+      file:
+        path: "/home/{{ item }}"
+        state: absent
+      with_items: "{{ usernames.split(',') }}"
+      
+    - name: Comment Key to break connection
+      lineinfile:
+        path: /home/ubuntu/.ssh/authorized_keys
+        regexp: '{{ lookup("file", "/home/ubuntu/.ssh/id_rsa.pub") }}'
+        line: '#{{ lookup("file", "/home/ubuntu/.ssh/id_rsa.pub") }}'
+        state: present
+        create: true
+    - name:   
+      authorized_key:
+        user: ubuntu
+        key: "{{ lookup('file', '/home/ubuntu/.ssh/id_rsa.pub') }}"
+        state: absent
+      

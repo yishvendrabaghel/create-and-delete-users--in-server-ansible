@@ -1,0 +1,12 @@
+- name: Remove comment from authorized key
+  hosts: localhost
+  become: true
+  become_user: ubuntu
+  tasks:
+    - name: user switch to sudo
+      shell: sudo su - ubuntu      
+    - name: Remove comment from authorized key
+      replace:
+        path: /home/ubuntu/.ssh/authorized_keys
+        regexp: '#'
+        replace: ''

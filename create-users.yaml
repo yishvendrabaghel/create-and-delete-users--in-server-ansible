@@ -1,0 +1,62 @@
+- hosts: all
+  become: true
+  vars_prompt:
+    - name: user_list
+      prompt: "Enter a list of users (comma-separated):"
+      private: no
+  vars:
+    user_to_grant: "bharat.yadav"
+          
+  tasks:
+    - name: Create users and add public key
+      user:
+        name: "{{ item }}"
+        createhome: yes
+        shell: /bin/bash
+        state: present
+        generate_ssh_key: yes
+      loop: "{{ user_list.split(',') }}"
+      register: users
+
+    - name: Add public key to authorized_keys
+      authorized_key:
+        user: "{{ item.item }}"
+        key: "{{ lookup('file', '/home/ubuntu/aws-ansible/pubfile/' + item.item + '.pub') }}"
+      loop: "{{ users.results }}"
+     
+
+    - name: Add user to sudoers file
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: "^{{ user_to_grant }}\\s"
+        line: "{{ user_to_grant }} ALL=(ALL) NOPASSWD: ALL"
+  
+    - name: Install Ansible
+      package:
+        name: ansible
+        state: present
+
+    - name: Install acl
+      package:
+        name: acl
+        state: present
+
+    - name: Copy SwitchUser Ansible file to server2
+      copy:
+        src: /home/ubuntu/test/userSwitch.yaml
+        dest: /var
+ 
+    - name: Comment Key to break connection
+      lineinfile:
+        path: /home/ubuntu/.ssh/authorized_keys
+        regexp: '{{ lookup("file", "/home/ubuntu/.ssh/id_rsa.pub") }}'
+        line: '#{{ lookup("file", "/home/ubuntu/.ssh/id_rsa.pub") }}'
+        state: present
+        create: true
+    - name:   
+      authorized_key:
+        user: ubuntu
+        key: "{{ lookup('file', '/home/ubuntu/.ssh/id_rsa.pub') }}"
+        state: absent
+
